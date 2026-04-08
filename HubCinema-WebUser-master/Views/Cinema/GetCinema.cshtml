@@ -1,0 +1,199 @@
+﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer Localizer
+@model MovieTicketWebsite.Models.Cinema
+@{
+    var movieShowList = ViewBag.MovieShowList as List<MovieWithShowtimes>;
+    var selectedDate = ViewBag.SelectedDate as string;
+}
+<link rel="stylesheet" href="~/css/GetCinema.css" />
+<script src="~/js/GetCinema.js"></script>
+<script src="~/js/BannerHandler.js"></script>
+<div class="container-fluid px-0">
+    <!-- Banner Slider -->
+    <div class="banner-slider row gx-3">
+        <div class="col-12 banner-item mx-3 position-relative">
+            <img src="/images/banner_rap1.jpg" class="img-fluid rounded-3 w-100" alt="banner1" />
+        </div>
+        <div class="col-12 banner-item mx-3">
+            <img src="/images/banner_rap2.jpg" class="img-fluid rounded-3 w-100" alt="banner2" />
+        </div>
+        <div class="col-12 banner-item mx-3">
+            <img src="/images/banner_rap3.jpg" class="img-fluid rounded-3 w-100" alt="banner3" />
+        </div>
+    </div>
+</div>
+<div class="container py-4">
+    <!-- Cinema Info -->
+    <div class="mb-4">
+        <h5 class="fw-bold">@Model.CinemaName</h5>
+        <p>
+            <strong>@Localizer["Address"]:</strong> @Model.Address<br>
+            <strong>@Localizer["City"]:</strong> @Model.City<br>
+            <strong>@Localizer["Hotline"]:</strong> <a href="tel:19002224">1900 2224</a>
+        </p>
+        <div class="d-flex gap-2">
+            <select class="form-select w-auto">
+                <option>@Model.City</option>
+            </select>
+            <select class="form-select w-auto">
+                <option>@Model.CinemaName</option>
+            </select>
+        </div>
+    </div>
+    <!-- Movie Header -->
+    <h5 class="fw-bold border-start border-4 border-primary ps-2 mb-3">@Localizer["Movies"]</h5>
+
+    <!-- Date Tabs -->
+    @{
+        var allDates = ViewBag.AvailableDates as List<string> ?? new();
+        var availableDates = allDates
+        .Select(d => DateTime.Parse(d))
+        .Where(d => d.Date >= DateTime.Today)
+        .OrderBy(d => d)
+        .ToList();
+
+         selectedDate = ViewBag.SelectedDate as string;
+    }
+
+    <ul class="nav d-flex gap-3 justify-content-center align-items-center border-bottom border-primary pb-2 mb-4" id="movieTabs">
+        @foreach (var date in availableDates)
+        {
+            var dateStr = date.ToString("yyyy-MM-dd");
+            var isToday = date.Date == DateTime.Today;
+            var label = isToday ? "Hôm Nay" : date.ToString("dddd", new System.Globalization.CultureInfo("vi-VN"));
+            var shortDate = date.ToString("dd/MM");
+            <li class="nav-item">
+                <button class="btn tab-date @(selectedDate == dateStr ? "active" : "")" data-date="@dateStr">
+                    @label<br /><small>@shortDate</small>
+                </button>
+            </li>
+        }
+    </ul>
+
+
+    @{
+        var now = DateTime.Now.AddMinutes(-20);
+    }
+
+    <div id="movieList" class="row row-cols-2 row-cols-md-6 g-4 mb-5">
+        @foreach (var movie in movieShowList)
+        {
+            // Lọc toàn bộ ngày chiếu và giờ chiếu hợp lệ
+            var validShowtimesByDate = movie.ShowtimesByDate
+            .Where(entry =>
+            {
+                // entry.Key có thể là string hoặc DateTime, nên parse an toàn
+                DateTime dateValue;
+                DateTime.TryParse(entry.Key?.ToString(), out dateValue);
+                // Chỉ giữ ngày hôm nay trở đi
+                return dateValue.Date >= now.Date;
+            })
+            .Select(entry => new
+            {
+                Date = entry.Key,
+                Showtimes = entry.Value
+            .SelectMany(t => t.Showtimes)
+            .Where(g => !string.IsNullOrWhiteSpace(g.StartTime))
+            .Select(g =>
+            {
+                DateTime parsedTime;
+                DateTime.TryParse(g.StartTime, out parsedTime);
+                return new { g.MaSuat, ParsedTime = parsedTime };
+            })
+            // Chỉ giữ suất chiếu chưa qua 20 phút
+            .Where(x => x.ParsedTime >= now)
+            .OrderBy(x => x.ParsedTime)
+            .ToList()
+            })
+            // Chỉ giữ ngày có ít nhất 1 suất hợp lệ
+            .Where(x => x.Showtimes.Any())
+            .ToList();
+
+            // Nếu phim không còn ngày hoặc suất hợp lệ => bỏ qua hoàn toàn
+            if (!validShowtimesByDate.Any())
+                continue;
+
+            // Render từng ngày hợp lệ
+            foreach (var entry in validShowtimesByDate)
+            {
+                var date = entry.Date;
+                var allShowtimes = entry.Showtimes;
+
+                <div class="col movie-card" data-date="@date">
+                    <div class="card h-100">
+                        <img src="@movie.PosterUrl" class="card-img-top" alt="@movie.MovieTitle" />
+                        <div class="card-body text-center">
+                            <h6 class="card-title">@movie.MovieTitle</h6>
+                            <div class="showtime-buttons d-flex flex-wrap gap-2 mt-2">
+                                @foreach (var time in allShowtimes)
+                                {
+                                    <a asp-controller="Movie"
+                                       asp-action="Details"
+                                       asp-route-id="@movie.MovieId"
+                                       class="badge-tag showtime-badge">
+                                        @time.ParsedTime.ToString("HH:mm")
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+
+
+
+
+    <!-- Ticket Price -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header fw-bold">@Localizer["TicketPrice"]</div>
+                <div class="card-body">
+                    <table class="table table-bordered text-center align-middle">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>@Localizer["Showtimes"]</th>
+                                <th>@Localizer["Member"]</th>
+                                <th>@Localizer["U22"]</th>
+                                <th>@Localizer["ChildSenior"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>THỨ 2, 4, 5 - TRƯỚC 17:00</td><td>70.000</td><td>55.000</td><td>55.000</td></tr>
+                            <tr><td>THỨ 2, 4, 5 - SAU 17:00</td><td>80.000</td><td>55.000</td><td>55.000</td></tr>
+                            <tr><td>THỨ 3 - HAPPY DAY</td><td>55.000</td><td>55.000</td><td>55.000</td></tr>
+                            <tr><td>THỨ 6, 7, CN - TRƯỚC 17:00</td><td>85.000</td><td>65.000</td><td>65.000</td></tr>
+                            <tr><td>THỨ 6, 7, CN - SAU 17:00</td><td>95.000</td><td>65.000</td><td>65.000</td></tr>
+                            <tr><td>@Localizer["Holiday"]</td><td>95.000</td><td>95.000</td><td>65.000</td></tr>
+                            <tr><td>@Localizer["PromotionDay"]</td><td colspan="3">50.000</td></tr>
+                            <tr><td>@Localizer["After10PM"]</td><td colspan="3">60.000</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="text-muted small">
+                        * Giá vé ngày lễ áp dụng cho các ngày lễ tết theo quy định<br />
+                        * U22 áp dụng cho học sinh – sinh viên dưới 22 tuổi (xuất trình thẻ)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Info -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header fw-bold">@Localizer["DetailInfo"]</div>
+                <div class="card-body">
+                    <p>
+                        <strong>@Localizer["Address"]:</strong> 119B Nguyễn Văn Quá, P.Đông Hưng Thuận, Q.12<br>
+                        <strong>@Localizer["Phone"]:</strong> <a href="tel:19002224">1900 2224</a>
+                    </p>
+                    <iframe src="https://www.google.com/maps?q=Galaxy+Nguy%E1%BB%85n+V%C4%83n+Qu%C3%A1&output=embed" width="100%" height="200" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                    <p class="mt-3">
+                        Tọa lạc ở 119B Nguyễn Văn Quá, Hub Nguyễn Văn Quá sở hữu vị trí "vàng" gần cầu Chợ Cầu, thuận tiện di chuyển. Với 7 phòng chiếu, chiếu cả 2D & 3D chuẩn quốc tế, âm thanh Dolby 7.1, là điểm đến lý tưởng cho mọi khán giả.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

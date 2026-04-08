@@ -1,0 +1,17 @@
+﻿@model List<MovieTicketWebsite.Models.Banner>
+
+@if (Model != null && Model.Any())
+{
+    <div class="container-fluid bg-white pb-5">
+        <div class="banner-slider">
+            @foreach (var banner in Model.OrderBy(b => b.DisplayOrder))
+            {
+                <div class="banner-item mx-3">
+                    <a href="@banner.LinkUrl">
+                        <img src="@banner.ImageUrl" class="img-fluid rounded-3 w-100" alt="@banner.Title" />
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+}

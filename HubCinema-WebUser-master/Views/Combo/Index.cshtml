@@ -1,0 +1,232 @@
+﻿@model List<MovieTicketWebsite.Models.FoodViewModel>
+@{
+    bool inBookingFlow = ViewBag.InBookingFlow ?? false;
+    var selectedFoods = ViewBag.SelectedFoods as List<MovieTicketWebsite.Models.FoodItem> ?? new();
+}
+
+<div class="container py-4">
+    <h2 class="mb-4 fw-bold">Chọn Combo / Sản phẩm</h2>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="row">
+                @foreach (var item in Model)
+                {
+                    var selectedItem = selectedFoods.FirstOrDefault(f => f.IdFood == item.IdFood);
+                    var quantity = selectedItem?.Quantity ?? 0;
+                    <div class="col-md-6 col-xl-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <img src="@item.ImageUrl" class="card-img-top rounded-top" style="height: 180px; object-fit: cover;" />
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">@item.FoodName</h5>
+                                <p class="card-text small">@item.Description</p>
+                                <div class="mt-auto d-flex align-items-center justify-content-between">
+                                    <span class="fw-bold">@item.Price.ToString("N0") đ</span>
+                                    <div class="input-group input-group-sm" style="width: 90px;">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="adjustQty(@item.IdFood, -1)">-</button>
+                                        <input type="number" min="0" value="@quantity" class="form-control text-center quantity"
+                                               data-id="@item.IdFood" data-price="@item.Price" readonly />
+                                        <button class="btn btn-outline-secondary" type="button" onclick="adjustQty(@item.IdFood, 1)">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm p-3">
+                <h5 class="fw-bold">Thông tin đặt vé</h5>
+                <div class="d-flex gap-2 align-items-center mb-2">
+                    <img src="@(ViewBag.PosterUrl ?? "/images/default-poster.jpg")" class="rounded" width="60" height="90" alt="Poster" />
+                    <div>
+                        <div class="fw-bold">@ViewBag.MovieTitle</div>
+                    </div>
+                </div>
+                <div class="small">
+                    <div><strong>Rạp:</strong> @ViewBag.CinemaName</div>
+                      @*<div><strong>Phòng:</strong> @ViewBag.RoomName</div>*@
+                    <div><strong>Suất chiếu:</strong> @ViewBag.ShowTime.ToString("HH:mm - dd/MM/yyyy")</div>
+                    @{
+                        var selectedSeats = ViewBag.SelectedSeats as List<string> ?? new();
+                        var cleanedSeats = selectedSeats
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .Select(s => s.Trim(',').Trim())
+                        .ToList();
+                    }
+                    @if (cleanedSeats.Any())
+                    {
+                        <div><strong>Ghế đã chọn:</strong> @string.Join(", ", cleanedSeats)</div>
+                    }
+
+
+                </div>
+
+                <hr />
+                <div class="fw-bold mb-2">Tóm tắt đơn hàng:</div>
+                <ul id="orderSummary" class="small ps-3"></ul>
+                <div class="fw-bold">Tổng cộng: <span id="totalAmountDisplay">0</span> đ</div>
+
+                <div class="d-flex justify-content-between mt-3">
+                    <a href="/Movie/ChonGhe/@ViewBag.ShowId" class="btn btn-outline-secondary">Quay lại</a>
+
+                    <button id="continueBtn" class="btn btn-primary">Tiếp tục</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const seatTotal = parseFloat("@(ViewBag.SeatTotal ?? 0)") || 0;
+
+        function adjustQty(id, delta) {
+            const input = document.querySelector(`.quantity[data-id='${id}']`);
+            let value = parseInt(input.value);
+            value = Math.max(0, value + delta);
+            input.value = value;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const quantities = document.querySelectorAll(".quantity");
+            const orderList = document.getElementById("orderSummary");
+            const totalSpan = document.getElementById("totalAmountDisplay");
+
+            orderList.innerHTML = "";
+            let total = seatTotal;
+
+            quantities.forEach(qty => {
+                const quantity = parseInt(qty.value);
+                const id = qty.dataset.id;
+                const price = parseFloat(qty.dataset.price);
+                if (quantity > 0) {
+                    total += quantity * price;
+                            const foodName = qty.closest('.card').querySelector('.card-title').textContent.trim();
+        orderList.innerHTML += `<li>${quantity}x ${foodName} - ${(quantity * price).toLocaleString()} đ</li>`;
+
+                }
+            });
+
+            totalSpan.textContent = total.toLocaleString();
+        }
+
+        // document.getElementById("continueBtn")?.addEventListener("click", async () => {
+        //     const quantities = document.querySelectorAll(".quantity");
+        //     const foods = [];
+
+        //     quantities.forEach(qty => {
+        //         const quantity = parseInt(qty.value);
+        //         if (quantity > 0) {
+        //             foods.push({
+        //                 idFood: parseInt(qty.dataset.id),
+        //                 price: parseFloat(qty.dataset.price),
+        //                 quantity
+        //             });
+        //         }
+        //     });
+
+        //     await fetch("/Combo/SaveComboSelection", {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ foods })
+        //     });
+
+        //     window.location.href = "/Checkout/Index";
+        // });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            updateSummary();
+        });
+    </script>
+}
+
+
+<div class="modal" tabindex="-1" id="ageConfirmModal" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+            <div class="fw-bold text-white bg-warning rounded-pill px-3 py-1 mx-auto mb-3" style="width: fit-content;">
+                <span id="ageRatingLabel">T?</span>
+            </div>
+            <h5 class="fw-bold mb-2">Xác nhận mua vé cho người có độ tuổi phù hợp</h5>
+            <p class="text-muted small">
+                Tôi xác nhận mua vé phim này cho người có độ tuổi từ
+                <span id="ageLimitText">?</span> trở lên và đồng ý cung cấp giấy tờ tùy thân để xác minh độ tuổi.
+            </p>
+            <div class="d-flex justify-content-center gap-3 mt-3">
+                <button class="btn btn-outline-secondary" id="btnAgeDecline">Từ chối</button>
+                <button class="btn btn-warning" id="btnAgeAccept">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ageRating = "@(ViewBag.AgeRestriction ?? "")".toUpperCase();
+    const continueBtn = document.getElementById("continueBtn");
+    const ageConfirmModal = document.getElementById("ageConfirmModal");
+
+    const ageLimitMap = {
+        "P": 0,
+        "K": 0,
+        "T13": 13,
+        "C13": 13,
+        "C16": 16,
+        "C18": 18
+    };
+
+    continueBtn?.addEventListener("click", () => {
+        const limit = ageLimitMap[ageRating];
+        if (limit && limit > 0) {
+            document.getElementById("ageRatingLabel").textContent = ageRating;
+            document.getElementById("ageLimitText").textContent = `${limit} tuổi`;
+            ageConfirmModal.style.display = "flex";
+        } else {
+            submitComboOrder(); // không giới hạn tuổi
+        }
+    });
+
+    document.getElementById("btnAgeAccept").addEventListener("click", () => {
+        ageConfirmModal.style.display = "none";
+        submitComboOrder();
+    });
+
+    document.getElementById("btnAgeDecline").addEventListener("click", () => {
+        ageConfirmModal.style.display = "none";
+    });
+
+    async function submitComboOrder() {
+        const quantities = document.querySelectorAll(".quantity");
+        const foods = [];
+
+        quantities.forEach(qty => {
+            const quantity = parseInt(qty.value);
+            if (quantity > 0) {
+                const foodName = qty.closest('.card').querySelector('.card-title').textContent.trim();
+                foods.push({
+                    idFood: parseInt(qty.dataset.id),
+                    price: parseFloat(qty.dataset.price),
+                    quantity,
+                    foodName: foodName   // thêm tên
+                });
+            }
+        });
+
+        await fetch("/Combo/SaveComboSelection", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ foods })
+        });
+
+        window.location.href = "/Checkout/Index";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        updateSummary();
+    });
+</script>
+
+
+

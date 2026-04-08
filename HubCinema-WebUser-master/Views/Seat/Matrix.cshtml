@@ -1,0 +1,100 @@
+﻿@using Newtonsoft.Json
+@model MovieTicketWebsite.Models.SeatSelectionViewModel
+
+@{
+    var bookingJson = Context.Session.GetString("BookingData");
+    List<string> selectedSeats = new();
+    if (!string.IsNullOrEmpty(bookingJson))
+    {
+        var booking = JsonConvert.DeserializeObject<MovieTicketWebsite.Models.Booking.BookingRequestModel>(bookingJson);
+        selectedSeats = booking.Seats?.Select(s => s.MaGhe)?.ToList() ?? new();
+    }
+}
+<script>
+    const previouslySelectedSeats = @Html.Raw(JsonConvert.SerializeObject(selectedSeats));
+</script>
+
+
+<div class="bg-light">
+    <div class="container py-4">
+        
+
+
+        <!-- 🔄 Đổi sang flex-row-reverse để ghế nằm bên trái, thông tin bên phải -->
+        <div class="d-flex flex-row-reverse gap-4 align-items-start mt-4">
+
+
+
+            <!-- 🔸 Box thông tin phim & thanh toán -->
+            <div class="movie-info-box bg-white border rounded p-3 shadow-sm" style="min-width: 300px; max-width: 360px; width: 100%;margin-top: 61px;">
+
+                <img src="@Model.PosterUrl" class="img-fluid mb-3 rounded" alt="@Model.MovieTitle" />
+                <h5 class="fw-bold">@Model.MovieTitle</h5>
+                @* <p class="mb-1"><strong>Định dạng:</strong> @Model.Format</p> *@
+                <p class="mb-1"><strong>Rạp:</strong> @Model.CinemaName</p>
+                @* <p class="mb-1"><strong>Phòng:</strong> @Model.RoomName</p> *@
+                <p class="mb-1"><strong>Suất chiếu:</strong> @Model.ShowTime.ToString("HH:mm - dd/MM/yyyy")</p>
+                <!-- 🔸 Ghế đã chọn -->
+                <div id="selectedSeatsBox" class="mt-3" style="display: none;">
+                    <div class="d-flex justify-content-between">
+                        <div><span id="seatTypeLabel"></span></div>
+                        <div><span id="seatPriceLabel"></span></div>
+                    </div>
+                    <div>Ghế: <span id="seatNames"></span></div>
+                </div>
+
+             
+
+                <!-- 🔽 Hiển thị tổng tiền -->
+                <div class="mt-2 fw-bold">Tổng cộng: <span id="totalAmount">0</span> VNĐ</div>
+
+                <!-- ✅ Sửa form này để chuyển đến trang combo -->
+                <form asp-controller="Combo" asp-action="Index" method="get" id="formDatVe">
+                    <input type="hidden" name="selectedSeats" id="selectedSeatsInput" />
+                    <input type="hidden" name="totalAmount" id="totalAmountInput" />
+
+                    <button type="button" class="btn btn-warning fw-bold w-100 mt-3" id="btnDatVe">
+                        Tiếp tục
+                    </button>
+                </form>
+
+            </div>
+
+            <!-- 🔹 Sơ đồ ghế -->
+            <div class="flex-grow-1">
+                <h2 class="fw-bold text-center mb-4">Chọn ghế</h2> <!-- ✅ Căn giữa theo sơ đồ -->
+                <div class="d-flex justify-content-center">
+                    <div id="seat-matrix"
+                         class="seat-matrix"
+                         data-id-suat-chieu="@Model.ShowId">
+                    </div>
+                </div>
+
+                <div class="screen-label text-center mt-3 fw-bold">Màn hình</div>
+
+                <!-- Ghi chú -->
+                <div class="d-flex flex-wrap gap-3 justify-content-center mt-4 small text-muted">
+                    <div><span class="seat confirmed me-1"></span> Ghế đã bán</div>
+                    <div><span class="seat selected me-1"></span> Ghế đang chọn</div>
+                    <div><span class="seat vip me-1"></span> Ghế VIP</div>
+                    <div><span class="seat me-1"></span> Ghế đơn</div>
+                    <div><span class="seat double-seat me-1"></span> Ghế đôi</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="errorModal" class="custom-modal-overlay" style="display:none;">
+        <div class="custom-modal-box text-center">
+            <div class="text-center mb-3">
+                <i class="bi bi-exclamation-circle-fill text-danger fs-1"></i>
+                <h5 class="mt-3 fw-bold" id="errorModalTitle">Thông báo</h5>
+                <p id="errorModalMessage" class="mt-2"></p>
+            </div>
+            <button class="btn btn-warning w-100 fw-bold mt-3" onclick="closeErrorModal()">Đóng</button>
+        </div>
+    </div>
+
+
+    <!-- Không sửa JS -->
+    <script src="~/js/seat-matrix-bootstrap.js" asp-append-version="true"></script>
+</div>

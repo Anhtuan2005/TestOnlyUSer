@@ -1,0 +1,186 @@
+﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer Localizer
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Serialization
+@model MovieTicketWebsite.Models.MovieDetailViewModel
+<!-- Banner -->
+<div class="banner position-relative bg-black overflow-hidden" style="height: 500px;">
+    <img src="@Model.CoverURL" alt="banner dan da dan"
+         class="d-block mx-auto h-100 object-fit-cover" />
+    <button type="button"
+            class="play-button position-absolute top-50 start-50 translate-middle border-0 bg-transparent">
+        <img src="/images/button-play.png" alt="Play" class="play-icon img-fluid" />
+    </button>
+</div>
+
+<!-- Wrapper Galaxy Style -->
+<div class="wrapper-section bg-white py-4 px-3 px-md-4 px-lg-5 mx-auto" style="max-width: 1200px;">
+<!-- Movie Section (thumbnail đè vào banner ~60px) -->
+<div class="container movie_section position-relative" style="margin-top: -60px;">
+    <div class="row align-items-end g-4">
+        <!-- Thumbnail -->
+        <div class="col-md-3">
+                <div class="thumbnail-wrapper">
+                    <img src="@Model.CoverURL" alt="@Model.MovieName" class="img-fluid thumbnail-img" />
+            </div>
+        </div>
+
+        <!-- Movie Details-->
+        <div class="col-md-9 mt-md-5 mt-4">
+            <div class="movie_details pt-4 ps-md-4">
+                <h3 class="fw-bold">
+                        @Model.MovieName
+                        @if (!string.IsNullOrWhiteSpace(Model.AgeRestriction))
+                        {
+                            <span class="badge bg-warning text-white">@Model.AgeRestriction</span>
+                        }
+                </h3>
+                    <p class="mb-1 text-muted"><i class="bi bi-clock"></i> @Model.Duration phút | <i class="bi bi-calendar"></i> @Model.ReleaseDate.ToString("dd/MM/yyyy")</p>
+                <p class="mb-2"><i class="bi bi-star-fill text-warning"></i> <strong>9.5</strong> (14 votes)</p>
+                    <p><strong>@Localizer["CountryLabel"]:</strong> Nhật Bản</p>
+                    <p><strong>@Localizer["ProducerLabel"]:</strong> @Model.Producer</p>
+                    <!-- Thể loại -->
+                    <div class="mb-2 d-flex flex-wrap align-items-center">
+                        <span class="fw-semibold text-muted me-2" style="min-width: 90px;">@Localizer["GenreLabel"]:</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var genre in Model.Genre?.Split(',') ?? Array.Empty<string>())
+                            {
+                                <span class="badge-tag">@genre.Trim()</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Đạo diễn -->
+                    <div class="mb-2 d-flex flex-wrap align-items-center">
+                        <span class="fw-semibold text-muted me-2" style="min-width: 90px;">@Localizer["DirectorLabel"]:</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var director in Model.Director?.Split(',') ?? Array.Empty<string>())
+                            {
+                                <span class="badge-tag">@director.Trim()</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Diễn viên -->
+                    <div class="mb-2 d-flex flex-wrap align-items-center">
+                        <span class="fw-semibold text-muted me-2" style="min-width: 90px;">@Localizer["ActorLabel"]:</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var actor in Model.Actors?.Split(',') ?? Array.Empty<string>())
+                            {
+                                <span class="badge-tag">@actor.Trim()</span>
+                            }
+                        </div>
+                    </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-black">
+            <div class="modal-body p-0 position-relative">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="ratio ratio-16x9">
+                        <div id="player" data-src="@Model.TrailerURL"></div> <!-- YouTube Player sẽ gắn vào đây -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class="movie_content mt-4">
+    <div class="d-flex align-items-center mb-3">
+        <div class="border-start border-4 border-primary me-2" style="height: 1.25rem;"></div>
+            <h5 class="fw-bold mb-0 text-capitalize">@Localizer["MovieContent"]</h5>
+    </div>
+
+    <div class="content-text text-secondary fs-6" style="line-height: 1.8;">
+        <p>
+                @Html.Raw(Model.Description)
+        </p>
+    </div>
+</div>
+
+    <!-- Lịch chiếu -->
+    <div class="movie_showtime mt-5">
+        <div class="d-flex align-items-center mb-3">
+            <div class="border-start border-4 border-primary me-2" style="height: 1.25rem;"></div>
+            <h5 class="fw-bold mb-0 text-capitalize">@Localizer["Showtimes"]</h5>
+        </div>
+
+        <!-- Bộ lọc ngày + vùng + rạp -->
+        <div class="row align-items-center gy-3">
+            <div class="col-md-7">
+                <div class="d-flex gap-2 flex-wrap" id="date-buttons">
+                    @{
+                        var today = DateTime.Now.Date;
+                        var availableDates = Model.AvailableDates ?? new List<DateTime>();
+                        var selectedDate = Model.SelectedDate.Date;
+                    }
+
+                    @foreach (var date in availableDates)
+                    {
+                        if (date.Date < today)
+                            continue;
+                        var isActive = date.Date == selectedDate;
+                        <button type="button" class="btn @(isActive ? "btn-primary text-white" : "btn-outline-secondary")"
+                                data-date="@date.ToString("yyyy-MM-dd")">
+                            @date.ToString("dddd", new System.Globalization.CultureInfo("vi-VN"))<br />
+                            @date.ToString("dd/MM")
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-5 text-md-end">
+                <div class="row g-2">
+                    <div class="col">
+                        <select id="region-select" class="form-select form-select-sm">
+                            @foreach (var region in Model.Regions)
+                            {
+                                <option value="@region">@region</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select id="cinema-select" class="form-select form-select-sm">
+                            <option value="">@Localizer["AllCinemas"]</option>
+                            @foreach (var cinema in Model.Cinemas)
+                            {
+                                <option value="@cinema.MaRap" data-region="@cinema.Region">
+                                    @cinema.TenRap
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danh sách lịch chiếu -->
+        <div class="mt-4" id="showtime-list">
+            <!-- Sẽ được render bằng JS -->
+        </div>
+    </div>
+
+    <!-- Dữ liệu showtimes (dạng JSON) -->
+    <script type="application/json" id="all-showtimes-data">
+        @Html.Raw(Model.AllShowtimesRawJson)
+    </script>
+
+</div>
+
+
+@section Scripts {
+    <script src="~/js/play-trailer.js" asp-append-version="true"></script>
+    <script src="~/js/movie-showtime.js" asp-append-version="true"></script>
+}
+
+
+

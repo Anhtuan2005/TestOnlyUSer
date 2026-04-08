@@ -1,0 +1,132 @@
+﻿
+.footer {
+    background-color: #2c2c2c;
+    color: #d0d0d0;
+    font-family: Arial, sans-serif;
+    padding: 40px 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 0 16px;
+}
+
+.footer-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.footer-section {
+    flex: 1 1 200px;
+}
+
+    .footer-section h3 {
+        color: white;
+        font-size: 15px; /* chỉnh cỡ chữ tiêu đề */
+        font-weight: bold;
+        text-transform: uppercase; /* in hoa giống ảnh */
+        margin-bottom: 16px;
+        letter-spacing: 0.5px;
+    }
+
+    .footer-section ul {
+        list-style: none;
+        padding: 0;
+    }
+
+        .footer-section ul li {
+            margin-bottom: 10px;
+        }
+
+            .footer-section ul li a {
+                color: #d0d0d0;
+                font-size: 14px; /* chỉnh cỡ chữ mục con */
+                line-height: 1.8; /* giãn dòng nhẹ */
+                text-decoration: none;
+                transition: color 0.3s;
+            }
+
+                .footer-section ul li a:hover {
+                    color: #FD841F;
+                }
+
+    .footer-section.social img {
+        max-width: 100%;
+        height: auto;
+    }
+
+/* Wrapper chứa các icon */
+.social-icons {
+    display: flex;
+    margin-top: 16px;
+}
+
+.social-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    text-decoration: none;
+}
+
+    .social-icon:hover {
+        transform: scale(1.25);
+    }
+
+    .social-icon img {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+        transition: filter 0.3s ease;
+    }
+    
+
+
+.bocongthuong {
+    margin-top: 10px;
+    width: 150px;
+}
+
+.footer-bottom {
+    border-top: 1px solid #888;
+    margin-top: 40px;
+    padding-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+    .footer-bottom img {
+        height: 42px;
+        width: auto;
+    }
+
+    .footer-bottom h3 {
+        font-size: 15px;
+        font-weight: bold;
+        color: white;
+        margin-bottom: 6px;
+    }
+
+    .footer-bottom p {
+        font-size: 14px;
+        color: #d0d0d0;
+        margin: 4px 0;
+        line-height: 1.6;
+    }
+
+    .footer-bottom a {
+        color: #d0d0d0;
+        text-decoration: none;
+    }
+
+        .footer-bottom a:hover {
+            color: #FD841F;
+        }

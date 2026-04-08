@@ -1,0 +1,67 @@
+﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer Localizer
+
+<!-- Modal nhập OTP xác thực (custom modal style) -->
+<div id="otpCheckModal" class="custom-modal-overlay" style="display:none;">
+    <div class="custom-modal-box">
+        <button class="custom-modal-close" onclick="closeOtpModal()">×</button>
+
+        <div class="text-center mb-4">
+            <img src="~/images/hub_logo_new.png" width="150" alt="@Localizer["OtpTitle"]" />
+            <h4 class="fw-bold mt-2">@Localizer["OtpTitle"]</h4>
+        </div>
+
+        <form id="otpForm" method="post" asp-controller="Login" asp-action="CheckOTP">
+            <div class="form-group mb-3">
+                <label for="otp">@Localizer["OtpInstruction"]</label>
+                <div class="d-flex justify-content-between gap-2">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <input type="text" maxlength="1" class="form-control text-center otp-digit" inputmode="numeric" pattern="\d*" />
+                    }
+                </div>
+                <input type="hidden" id="otp" name="otp" />
+            </div>
+
+            <div id="otpError" class="text-danger mb-2" style="display:none;"></div>
+            <div id="otpSuccess" class="text-success mb-2" style="display:none;"></div>
+
+            <button type="submit" style="background: #E48600;" class="btn w-100 text-white fw-bold">@Localizer["VerifyButton"]</button>
+        </form>
+    </div>
+</div>
+<script>
+    const otpDigits = document.querySelectorAll('.otp-digit');
+    const hiddenOtpInput = document.getElementById('otp');
+
+    otpDigits.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            const value = e.target.value;
+            // Chỉ cho nhập số
+            if (!/^\d$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+
+            // Tự động chuyển ô tiếp theo
+            if (index < otpDigits.length - 1) {
+                otpDigits[index + 1].focus();
+            }
+
+            // Cập nhật giá trị ẩn
+            updateHiddenOtp();
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace') {
+                if (input.value === '' && index > 0) {
+                    otpDigits[index - 1].focus();
+                }
+            }
+        });
+    });
+
+    function updateHiddenOtp() {
+        const otpValue = Array.from(otpDigits).map(input => input.value).join('');
+        hiddenOtpInput.value = otpValue;
+    }
+</script>

@@ -1,0 +1,128 @@
+﻿/* ==== Tổng container sơ đồ ==== */
+.seat-matrix {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 0;
+    background-color: #fff;
+    border-radius: 8px;
+    max-width: 100%;
+    margin: auto;
+    font-size: 11px;
+}
+
+/* ==== Mỗi hàng ghế ==== */
+.seat-row {
+    display: grid;
+    grid-template-columns: 20px repeat(25, 22px) 20px; /* 25 ghế + 2 nhãn */
+    align-items: center;
+    justify-content: center;
+    column-gap: 6px;
+    margin-bottom: 2px;
+}
+
+/* ==== Nhãn hàng (A–P) ==== */
+.seat-label {
+    width: 20px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: 500;
+    color: #888;
+}
+
+/* ==== Ghế đơn ==== */
+.seat {
+    width: 22px;
+    height: 22px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 10px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+    /* ==== Ghế đôi ==== */
+    .seat.double-seat {
+        width: 46px;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+        background-color: #e0f0ff;
+        border: 1px solid #3399ff;
+        font-size: 10px;
+        color: #000;
+        border-radius: 4px;
+        white-space: nowrap;
+        line-height: 22px;
+    }
+
+
+
+    /* ==== Ghế VIP ==== */
+    .seat.vip {
+        background-color: #fffbe6;
+        border: 2px solid gold;
+    }
+
+    /* ==== Ghế đã bán ==== */
+    .seat.confirmed {
+        background-color: #ccc !important;
+        border-color: #aaa !important;
+        color: #888;
+        cursor: not-allowed;
+    }
+
+    /* ==== Ghế đang giữ ==== */
+    .seat.held {
+        background-color: #999 !important;
+        border-color: #666 !important;
+        color: #fff;
+        cursor: not-allowed;
+    }
+
+    /* ==== Ghế đơn đang chọn ==== */
+    .seat.selected:not(.double-seat) {
+        background-color: #fd7e14;
+        border-color: #fd7e14;
+        color: #fff;
+    }
+
+    /* ==== Ghế đôi đang chọn ==== */
+    .seat.double-seat.selected {
+        background-color: #fd7e14 !important;
+        border-color: #3399ff !important;
+        color: #fff !important;
+    }
+
+    /* ==== Ghế rỗng (null) ==== */
+    .seat.empty {
+        background-color: transparent;
+        border: none;
+        cursor: default;
+    }
+
+/* ==== Màn hình ==== */
+.screen-label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #ccc;
+    margin-top: 20px;
+    position: relative;
+}
+
+    .screen-label::after {
+        content: "";
+        display: block;
+        height: 4px;
+        width: 80%;
+        max-width: 600px;
+        margin: 6px auto 0;
+        background-color: #fd7e14;
+        border-radius: 2px;
+    }

@@ -1,0 +1,89 @@
+﻿@model MovieTicketWebsite.Models.HomeIndexViewModel
+
+<main>
+    @await Html.PartialAsync("_IndexBanner", Model.Banners)
+    @await Html.PartialAsync("_IndexMovie", Model.Movies)
+    @await Html.PartialAsync("_IndexCombo", Model.Combos)
+    @await Html.PartialAsync("_IndexNews", Model.News)
+
+    
+</main>
+@section Scripts {
+@if (TempData["RegisterMessage"] != null)
+{
+    <script>
+        const encodedMsg = "@TempData["RegisterMessage"]";
+        const txt = document.createElement("textarea");
+        txt.innerHTML = encodedMsg;
+        alert(txt.value);
+    </script>
+}
+
+    @if (TempData["ForgotMessage"] != null && TempData["CloseForgotModal"] == null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const encodedMsg = "@TempData["ForgotMessage"]";
+                const txt = document.createElement("textarea");
+                txt.innerHTML = encodedMsg;
+                alert(txt.value);
+                if (typeof openForgotModal === "function") openForgotModal();
+            });
+        </script>
+    }
+
+    @if (TempData["CloseForgotModal"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                if (typeof closeForgotModal === "function") {
+                    closeForgotModal();
+                }
+            });
+        </script>
+    }
+
+@if (TempData["OTPResult"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const txt = document.createElement("textarea");
+            txt.innerHTML = "@TempData["OTPResult"]";
+            alert(txt.value);
+        });
+    </script>
+}
+
+@if (TempData["OpenConfirmModal"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof openConfirmPasswordModal === "function") {
+                openConfirmPasswordModal();
+            }
+        });
+    </script>
+}
+
+@if (TempData["OpenOtpModal"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+                const otpModal = new bootstrap.Modal(document.getElementById('otpCheckModal').style.display = "flex");
+            otpModal.show();
+        });
+    </script>
+}
+    @if (TempData["ShowLoginModal"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const loginModal = document.getElementById("loginModal");
+                if (loginModal) loginModal.style.display = "flex";
+            });
+        </script>
+    }
+
+}
+
+

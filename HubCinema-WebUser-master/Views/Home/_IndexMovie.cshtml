@@ -1,0 +1,96 @@
+﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer Localizer
+@model List<MovieTicketWebsite.Models.Movie>
+
+<section class="movie-section">
+    <div class="container">
+
+        <!-- Tiêu đề PHIM căn trái theo movie -->
+        <div class="row align-items-center mb-4">
+            <!-- PHIM tiêu đề -->
+            <div class="col-auto d-flex align-items-center">
+                <div style="width: 5px; height: 22px; background-color: #d18800; border-radius: 2px;" class="me-2"></div>
+                <h2 class="section-title m-0 fs-5 fw-bold">@Localizer["MovieSectionTitle"]</h2>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="tabs">
+            <li class="tab active" data-target="#showing">@Localizer["NowShowingTab"]</li>
+            <li class="tab" data-target="#upcoming">@Localizer["ComingSoonTab"]</li>
+        </ul>
+
+        <!-- Tab nội dung -->
+        <div class="tab-content">
+            <div class="tab-panel show" id="showing">
+                <div class="row g-4 movie-limit">
+                    @{
+                        var showingMovies = Model.Where(m => m.Status == 1).ToList();
+                        var upcomingMovies = Model.Where(m => m.Status == 0).ToList();
+                        int count = 0;
+                    }
+                    @foreach (var movie in showingMovies)
+                    {
+                        var hiddenClass = count >= 8 ? "movie-hidden" : "";
+                        <div class="col-lg-3 col-md-4 col-6 @hiddenClass">
+                            <a href="@Url.Action("Details", "Movie", new { id = movie.IdMovie })" class="movie-item-link">
+                                <div class="movie-item">
+                                    <img src="@(string.IsNullOrEmpty(movie.CoverURL) ? "/images/dan-da-dan.jpg" : movie.CoverURL)"
+                                         alt="@movie.MovieName"
+                                         onerror="this.onerror=null; this.src='/images/dan-da-dan.jpg';" />
+                                    <div class="movie-title">@movie.MovieName</div>
+                                    <div class="movie-info">
+                                        @Localizer["Genre"]: @movie.Genre<br />
+                                        @Localizer["Duration"]: @movie.Duration @Localizer["Minutes"]
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        count++;
+                    }
+                </div>
+
+                @if (showingMovies.Count > 8)
+                {
+                    <div class="film__footer text-center mt-4">
+                        <button id="showMoreBtn"
+                                data-expand="@Localizer["Expand"]"
+                                data-collapse="@Localizer["Collapse"]"
+                                class="btn btn-outline-warning px-4 py-2 fw-medium d-inline-flex align-items-center gap-2">
+                            @Localizer["Expand"]
+
+                            <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="angle-right"
+                                 class="svg-inline--fa fa-angle-right" role="img"
+                                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="14" height="14">
+                                <path fill="currentColor"
+                                      d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <!-- PHIM SẮP CHIẾU -->
+            <div class="tab-panel" id="upcoming">
+                <div class="row g-4">
+                    @foreach (var movie in upcomingMovies)
+                    {
+
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="@Url.Action("Details", "Movie", new { id = movie.IdMovie })" class="movie-item-link">
+                            <div class="movie-item">
+                                <img src="@(string.IsNullOrEmpty(movie.CoverURL) ? "/images/default.jpg" : movie.CoverURL)"
+                                     alt="@movie.MovieName"
+                                     onerror="this.onerror=null; this.src='/images/default.jpg';" />
+                                <div class="movie-title">@movie.MovieName</div>
+                                    <div class="movie-info">@Localizer["ReleaseDate"]: @movie.ReleaseDate.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div> <!-- end container -->
+</section>

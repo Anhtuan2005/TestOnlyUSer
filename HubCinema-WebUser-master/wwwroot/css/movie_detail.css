@@ -1,0 +1,88 @@
+﻿.banner {
+    background-color: black;
+    position: relative;
+    width: 100%;
+    height: 30rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.banner-img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+}
+
+.play-button {
+    z-index: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out;
+}
+
+    .play-button:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+.play-icon {
+    width: 40px;
+    height: 40px;
+}
+
+
+.thumbnail-wrapper {
+    max-width: 320px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.thumbnail-img {
+    border: 3px solid #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    object-fit: cover;
+}
+
+
+    .thumbnail-img:hover {
+        transform: scale(1.02);
+        opacity: 0.95;
+    }
+
+.content-text p {
+    margin-bottom: 12px;
+}
+
+.movie_content a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+.badge-tag {
+    display: inline-block;
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ccc;
+    text-decoration: none; /* ✅ bỏ gạch chân */
+    padding: 4px 10px;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+    .badge-tag:hover {
+        background-color: #0d6efd;
+        border-color: #0a58ca;
+        cursor: pointer;
+        color: #fff;
+    }
+
+@media (min-width: 992px) {
+    .play-icon {
+        width: 64px;
+        height: 64px;
+    }
+}
+
+
+

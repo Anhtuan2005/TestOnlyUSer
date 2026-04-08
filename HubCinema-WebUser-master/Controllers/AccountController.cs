@@ -1,0 +1,244 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using MovieTicketWebsite.Models;
+using MovieTicketWebsite.Services.Transaction;
+using Newtonsoft.Json;
+using System.Net;
+using System.Net.Http.Headers;
+
+namespace MovieTicketWebsite.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string _baseApiUrl;
+
+        public AccountController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        {
+            _httpClientFactory = httpClientFactory;
+            _baseApiUrl = configuration["ApiSettings:BaseUrl"];
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var token = HttpContext.Session.GetString("AccessToken");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                TempData["LoginMessage"] = "Chưa đăng nhập.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            try
+            {
+                var response = await client.GetAsync($"{_baseApiUrl}/user/getinfo");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
+
+                    // Gọi TransactionService
+                    var transactionService = HttpContext.RequestServices.GetRequiredService<ITransactionService>();
+                    var transactions = await transactionService.GetTransactionHistoryAsync(token);
+                    ViewBag.Transactions = transactions;
+
+                    return View(userInfo);
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    HttpContext.Session.Clear();
+                    TempData["LoginMessage"] = "Phiên đăng nhập đã hết hạn.";
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    TempData["LoginMessage"] = "Lỗi khi lấy thông tin người dùng.";
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["LoginMessage"] = "Lỗi kết nối: " + ex.Message;
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(ChangePasswordModel model)
+        {
+            var token = HttpContext.Session.GetString("AccessToken");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                TempData["ChangePasswordMessage"] = "Không tìm thấy thông tin đăng nhập.";
+                return RedirectToAction("Profile");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var requestBody = new
+            {
+                oldPassword = model.OldPassword,
+                newPassword = model.NewPassword
+            };
+
+            try
+            {
+                var response = await client.PostAsJsonAsync($"{_baseApiUrl}/user/changepw", requestBody);
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+                dynamic result = JsonConvert.DeserializeObject(responseBody);
+
+                if (response.IsSuccessStatusCode && result.status == 1)
+                {
+                    TempData["ChangePasswordMessage"] = "Đổi mật khẩu thành công.";
+                }
+                else
+                {
+                    TempData["ChangePasswordMessage"] = $" {result.message}";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ChangePasswordMessage"] = $"Lỗi: {ex.Message}";
+            }
+
+            return RedirectToAction("Profile");
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            var token = HttpContext.Session.GetString("AccessToken");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                TempData["LogoutMessage"] = "Bạn chưa đăng nhập.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            try
+            {
+                var response = await client.GetAsync($"{_baseApiUrl}/user/logout");
+
+                var result = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(); // ✅ dùng ReadFromJsonAsync
+                HttpContext.Session.Clear();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["LogoutMessage"] = result != null && result.ContainsKey("message")
+                        ? result["message"]
+                        : "Đăng xuất thành công.";
+                }
+                else
+                {
+                    TempData["LogoutMessage"] = $"Lỗi đăng xuất: {response.StatusCode}";
+                }
+            }
+            catch (Exception ex)
+            {
+                HttpContext.Session.Clear();
+                TempData["LogoutMessage"] = $"Lỗi kết nối API: {ex.Message}";
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
+        [HttpPost]
+        public async Task<IActionResult> ChangeEmail(string emailNew)
+        {
+            var token = HttpContext.Session.GetString("AccessToken");
+            if (string.IsNullOrEmpty(token))
+            {
+                TempData["ChangeEmailMessage"] = "Không tìm thấy thông tin đăng nhập.";
+                return RedirectToAction("Profile");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var requestBody = new { emailNew = emailNew };
+
+            try
+            {
+                var response = await client.PostAsJsonAsync($"{_baseApiUrl}/user/changeemail", requestBody);
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseBody);
+
+                if (response.IsSuccessStatusCode && result.ContainsKey("otpToken"))
+                {
+                    string otpToken = result["otpToken"]?.ToString();
+                    if (!string.IsNullOrEmpty(otpToken))
+                    {
+                        HttpContext.Session.SetString("OtpChangeEmailToken", otpToken);
+                    }
+
+                    TempData["ChangeEmailMessage"] = "Đã gửi mã OTP đến email mới.";
+                    TempData["OpenConfirmChangeEmailModal"] = "true";
+                }
+                else
+                {
+                    TempData["ChangeEmailMessage"] = result.ContainsKey("message") ? result["message"]?.ToString() : "Có lỗi xảy ra.";
+                }
+            }
+
+            catch (Exception ex)
+            {
+                TempData["ChangeEmailMessage"] = $"Lỗi kết nối: {ex.Message}";
+            }
+
+            return RedirectToAction("Profile");
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmChangeEmail(string otp)
+        {
+            var token = HttpContext.Session.GetString("AccessToken");
+            var otpToken = HttpContext.Session.GetString("OtpChangeEmailToken");
+
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(otpToken) || string.IsNullOrEmpty(otp))
+            {
+                TempData["ConfirmEmailMessage"] = "Thiếu thông tin xác thực.";
+                return RedirectToAction("Profile");
+            }
+
+            var requestBody = new { otpToken = otpToken, otp = otp };
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            try
+            {
+                var response = await client.PostAsJsonAsync($"{_baseApiUrl}/user/confirmchangeemail", requestBody);
+                var responseBody = await response.Content.ReadAsStringAsync();
+                dynamic result = JsonConvert.DeserializeObject(responseBody);
+
+                if (response.IsSuccessStatusCode && result.status == 1)
+                {
+                    TempData["ConfirmEmailMessage"] = "Thay đổi email thành công.";
+                    HttpContext.Session.Remove("OtpChangeEmailToken");
+                }
+                else
+                {
+                    TempData["ConfirmEmailMessage"] = $"Lỗi: {result.message}";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ConfirmEmailMessage"] = $"Lỗi kết nối: {ex.Message}";
+            }
+
+            return RedirectToAction("Profile");
+        }
+
+
+    }
+}

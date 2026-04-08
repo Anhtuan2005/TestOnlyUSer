@@ -1,0 +1,132 @@
+﻿@model MovieTicketWebsite.Models.CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">Thanh toán</h2>
+
+    <div class="row">
+        <!-- 🔸 Cột trái: Chọn khuyến mãi + phương thức -->
+        <div class="col-lg-8">
+                <!-- Mã khuyến mãi -->
+                <div class="mb-3">
+                    <label for="voucherCode" class="form-label">Mã khuyến mãi</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="VoucherCode" id="voucherCode" placeholder="Nhập mã giảm giá nếu có">
+                        <button type="button" class="btn btn-outline-primary">Áp dụng</button>
+                    </div>
+                </div>
+
+                <!-- Dùng điểm (nếu có hệ thống điểm tích lũy) -->
+                <div class="mb-3">
+                    <label class="form-label">Sử dụng điểm Stars</label>
+                    <input type="number" name="UsedPoint" class="form-control" min="0" max="100" value="0">
+                </div>
+
+                <!-- Phương thức thanh toán -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Phương thức thanh toán</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="PaymentMethod" value="vnpay" id="vnpayRadio" checked>
+                        <label class="form-check-label" for="vnpayRadio">
+                            VNPay - ATM/VISA/MASTER
+                        </label>
+                    </div>
+                </div>
+                <!-- Thay nút submit -->
+                <button type="button" class="btn btn-danger px-4" id="openModalBtn" data-bs-toggle="modal" data-bs-target="#confirmPaymentModal">
+                    Thanh toán
+                </button>
+
+        </div>
+
+        <!-- 🔹 Cột phải: Thông tin đơn hàng -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm p-3">
+                <h5 class="fw-bold mb-3">Thông tin đơn hàng</h5>
+                <div class="d-flex gap-2 align-items-center mb-2">
+                    <img src="@Model.PosterUrl" class="rounded" width="60" height="90" />
+                    <div>
+                        <div class="fw-bold">@Model.MovieTitle</div>
+                    </div>
+                </div>
+
+                <div class="small mb-2">
+                    <div><strong>Rạp:</strong> @Model.CinemaName</div>
+                    @* <div><strong>Phòng:</strong> @Model.RoomName</div> *@
+                    <div><strong>Suất:</strong> @Model.ShowTime.ToString("HH:mm - dddd, dd/MM/yyyy")</div>
+                    @{
+                        var cleanedSeats = Model.Seats
+                        .Where(s => !string.IsNullOrWhiteSpace(s.MaGhe))
+                        .Select(s => s.MaGhe.Trim().Trim(','))
+                        .ToList();
+                    }
+                    <div><strong>Ghế:</strong> @string.Join(", ", cleanedSeats)</div>
+
+                </div>
+
+                <hr />
+                <!-- Tổng tiền ghế -->
+                @if (Model.Seats != null && Model.Seats.Any())
+                {
+                    <div class="d-flex justify-content-between small">
+                        <div>
+                            Ghế: @string.Join(", ", cleanedSeats)
+                        </div>
+                        <div>@Model.SeatTotal.ToString("N0") đ</div>
+                    </div>
+
+                }
+
+                <!-- Danh sách combo -->
+                @if (Model.Foods != null && Model.Foods.Any())
+
+                {
+                    @foreach (var food in Model.Foods)
+                    {
+                        <div class="d-flex justify-content-between small">
+                            <div>@food.Quantity x @food.FoodName</div>
+
+                            <div>@((food.Quantity * food.Price).ToString("N0")) đ</div>
+                        </div>
+
+                    }
+
+                }
+
+                <hr />
+
+                <!-- Tổng cộng -->
+                <div class="d-flex justify-content-between fw-bold fs-6">
+                    <div>Tổng cộng:</div>
+                    <div>@Model.TotalAmount.ToString("N0") đ</div>
+                </div>
+
+
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_ConfirmPaymentModal", Model)
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const agreeCheckbox = document.getElementById("agreeCheckbox");
+            const confirmBtn = document.getElementById("confirmBtn");
+
+            agreeCheckbox?.addEventListener("change", () => {
+                confirmBtn.disabled = !agreeCheckbox.checked;
+            });
+
+            document.getElementById("openModalBtn")?.addEventListener("click", () => {
+                document.getElementById("modalVoucherCode").value = document.getElementById("voucherCode").value;
+                document.getElementById("modalUsedPoint").value = document.querySelector("input[name='UsedPoint']").value;
+            });
+        });
+    </script>
+}

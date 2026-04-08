@@ -1,0 +1,316 @@
+﻿@model UserInfo
+@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer Localizer
+
+<div class="container py-4">
+    <div class="row">
+        <!-- Bên trái: Card thông tin -->
+        <div class="col-md-4">
+            <div class="card shadow-sm p-4 rounded-4">
+                <div class="d-flex align-items-center mb-3 gap-3">
+                    
+                    <div>
+                        <small class="text-muted d-block">@Localizer["FullName"]: <strong>@Model.FullName</strong></small>
+                        <svg id="barcode"></svg>
+                        <small class="text-muted d-block">@Localizer["MemberCode"]: <strong>@Model.MaBarcode</strong></small>
+                    </div>
+                </div>
+
+                <div class="user-meta text-start ps-1 mb-3">
+                    <p class="mb-1 text-muted">@Localizer["Birthday"]: <strong>@(DateTime.Parse(Model.Dob).ToString("dd/MM/yyyy"))</strong></p>
+                    <p class="mb-0 text-muted">@Localizer["Points"]: <strong>@Model.Diem ⭐</strong></p>
+                </div>
+
+                <hr />
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-semibold text-dark">@Localizer["TotalSpend2025"]</span>
+                            <span class="rounded-circle border border-primary d-flex justify-content-center align-items-center"
+                                  style="width: 16px; height: 16px; font-size: 10px"
+                                  title="Thông tin">
+                                <i class="bi bi-info-lg text-primary"></i>
+                            </span>
+                        </div>
+                        <div class="text-warning fw-bold">
+                            @Model.TongChiTieu.ToString("N0") <span class="fw-normal" style="font-size: 15px">đ</span>
+                        </div>
+                    </div>
+
+                    <div class="position-relative my-3" style="margin-top:10px">
+                        <div class="position-absolute text-center icon-label" style="left: 0%; top: -8px;">
+                            🥉<div class="small">0đ</div>
+                        </div>
+                        <div class="position-absolute text-center icon-label" style="left: 50%; top: -8px; transform: translateX(-50%);">
+                            ⭐<div class="small">2trđ</div>
+                        </div>
+                        <div class="position-absolute text-center icon-label" style="left: 100%; top: -8px; transform: translateX(-100%);">
+                            🎯<div class="small">4trđ</div>
+                        </div>
+
+                        <div class="progress bg-light rounded-pill" style="height: 8px;">
+                            @{
+                                var percent = (double)Model.TongChiTieu / 4000000 * 100;
+                            }
+                            <div class="progress-bar bg-primary" style="width: @(percent > 100 ? 100 : percent)%"></div>
+                        </div>
+
+                        <style>
+                            .icon-label .small {
+                                margin-top: 6px;
+                                display: block;
+                                font-size: 13px;
+                            }
+                        </style>
+                    </div>
+
+                </div>
+
+                <hr />
+                <ul class="list-unstyled mb-0">
+                    <li class="py-2 d-flex justify-content-between align-items-center border-bottom">
+                        <span>@Localizer["Hotline"]:</span>
+                        <a href="tel:19002224" class="text-primary">19002224</a>
+                    </li>
+                    <li class="py-2 d-flex justify-content-between align-items-center border-bottom">
+                        <span>@Localizer["Email"]:</span>
+                        <a href="hotro@galaxystudio.vn" class="text-primary">hotro@hub.vnl</a>
+                    </li>
+                    <li class="py-2 d-flex justify-content-between align-items-center">
+                        <span>@Localizer["FAQ"]</span>
+                        <span class="text-muted">›</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Bên phải: Form -->
+        <div class="col-md-8">
+            <div class="card shadow-sm p-4 rounded-4">
+                <form>
+                    <div class="row g-3">
+                        <!-- Họ và tên -->
+                        <div class="col-md-6">
+                            <label class="form-label">@Localizer["FullName"]</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-0">
+                                    <i class="bi bi-person-fill"></i>
+                                </span>
+                                <input type="text" class="form-control bg-light border-0" value="@Model.FullName" disabled />
+                            </div>
+                        </div>
+
+                        <!-- Ngày sinh -->
+                        <div class="col-md-6">
+                            <label class="form-label">@Localizer["Birthday"]</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-0">
+                                    <i class="bi bi-calendar-event-fill"></i>
+                                </span>
+                                <input type="text" class="form-control bg-light border-0" value="@(DateTime.Parse(Model.Dob).ToString("dd/MM/yyyy"))" disabled />
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            <label class="form-label">@Localizer["Email"]</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-0">
+                                    <i class="bi bi-envelope-fill"></i>
+                                </span>
+                                <input type="email" class="form-control bg-light border-0" value="@Model.Email" disabled />
+                                <span class="input-group-text bg-light border-0 text-warning" style="cursor: pointer;" onclick="openChangeEmailModal()">@Localizer["Change"]</span>
+                            </div>
+                        </div>
+
+                        <!-- Số điện thoại -->
+                        <div class="col-md-6">
+                            <label class="form-label">@Localizer["Phone"]</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-0">
+                                    <i class="bi bi-phone-fill"></i>
+                                </span>
+                                <input type="text" class="form-control bg-light border-0" value="@Model.Phone" disabled />
+                            </div>
+                        </div>
+
+                        <!-- Giới tính -->
+                        <div class="col-md-6">
+                            <label class="form-label">@Localizer["Gender"]</label><br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="male" disabled checked="@((Model.Gender == "Nam"))" />
+                                <label class="form-check-label" for="male">@Localizer["Male"]</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="female" disabled checked="@((Model.Gender == "Nữ"))" />
+                                <label class="form-check-label" for="female">@Localizer["Female"]</label>
+                            </div>
+                        </div>
+
+                        <!-- Mật khẩu -->
+                        <div class="col-md-6">
+                            <label class="form-label">@Localizer["Password"]</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-0">
+                                    <i class="bi bi-lock-fill"></i>
+                                </span>
+                                <input type="password" class="form-control bg-light border-0" value="********" disabled />
+                                <span class="input-group-text bg-light border-0 text-warning" style="cursor: pointer;" onclick="openChangePasswordModal()">@Localizer["Change"]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button -->
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-warning text-white px-4 rounded">@Localizer["Update"]</button>
+                    </div>
+                </form>
+               
+            </div>
+            @if (ViewBag.Transactions != null)
+            {
+                var transactions = (List<MovieTicketWebsite.Models.Transaction.TransactionHistoryItem>)ViewBag.Transactions;
+
+                <div class="mt-4">
+                    <h5 class="mb-3 text-dark fw-semibold">🧾 @Localizer["RecentTransactions"]</h5>
+
+                    <div class="d-flex flex-column gap-3" id="transactionList">
+                        @for (int i = 0; i < transactions.Count; i++)
+                        {
+                            var item = transactions[i];
+                            var isHidden = i >= 3;
+                            var style = isHidden ? "display: none;" : "";
+
+                            <div class="d-flex align-items-center justify-content-between border rounded shadow-sm p-3 bg-white @(isHidden ? "transaction-item d-none" : "transaction-item")">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3 d-flex flex-column align-items-center">
+                                        <img src="@item.PosterUrl" alt="poster" width="50" height="70" class="rounded mb-2" />
+
+                                        
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">@item.MovieTitle</div>
+                                        <div class="text-muted small">@item.CinemaName - <strong>@item.RoomName</strong></div>
+                                        <div class="text-muted small">
+                                            🕒 <strong>@item.ShowTime.ToString("HH:mm")</strong> - @item.ShowTime.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN"))
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="javascript:void(0)" class="text-warning fw-semibold small" onclick="showTicketModal('@item.OrderId')">@Localizer["Details"]</a>
+                            </div>
+
+                        }
+                    </div>
+
+                    @if (transactions.Count > 3)
+                    {
+                        <div class="text-center mt-3">
+                            <button id="toggleTransactionBtn" class="btn btn-outline-warning px-4 py-2 fw-medium d-inline-flex align-items-center gap-2">
+                                <span class="toggle-text">@Localizer["SeeMore"]</span>
+                                <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="14" height="14">
+                                    <path fill="currentColor" d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" />
+                                </svg>
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal xem vé -->
+<div class="modal fade" id="ticketModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3">
+            <div id="ticketContent">
+                <div class="text-center text-muted">@Localizer["Loading"]</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@Html.Partial("_ChangePasswordModal")
+@Html.Partial("_ChangeEmail")
+@Html.Partial("_ConfirmChangeEmail")
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        JsBarcode("#barcode", "@Model.MaBarcode", {
+            format: "CODE128",
+            lineColor: "#000",
+            width: 2,
+            height: 40,
+            displayValue: false
+        });
+    });
+</script>
+
+<script src="~/js/ChangePassHandler.js"></script>
+@if (TempData["OpenConfirmChangeEmailModal"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof openConfirmChangeEmailModal === "function") {
+                openConfirmChangeEmailModal(); // ✅ mở modal
+            }
+        });
+    </script>
+}
+
+<script>
+    const localizedNotFound = "@Localizer["NotFound"]";
+
+    function showTicketModal(orderId) {
+        const contentEl = document.getElementById("ticketContent");
+        contentEl.innerHTML = '<div class="text-center text-muted">@Localizer["Loading"]</div>';
+
+        fetch(`/Ticket/GetTicketPartial?orderId=${orderId}`)
+            .then(res => {
+                if (!res.ok) throw new Error(localizedNotFound);
+                return res.text();
+            })
+            .then(html => {
+                contentEl.innerHTML = html;
+                const modal = new bootstrap.Modal(document.getElementById('ticketModal'));
+                modal.show();
+            })
+            .catch(err => {
+                contentEl.innerHTML = `<div class="text-danger text-center">❌ ${err.message}</div>`;
+            });
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleBtn = document.getElementById("toggleTransactionBtn");
+        if (!toggleBtn) return;
+
+        const transactions = document.querySelectorAll(".transaction-item");
+        const toggleText = toggleBtn.querySelector(".toggle-text");
+        const toggleIcon = toggleBtn.querySelector(".toggle-icon");
+
+        let isExpanded = false;
+
+        toggleBtn.addEventListener("click", function () {
+            isExpanded = !isExpanded;
+
+            transactions.forEach((el, index) => {
+                if (index >= 3) {
+                    if (isExpanded) {
+                        el.classList.remove("d-none");
+                    } else {
+                        el.classList.add("d-none");
+                    }
+                }
+            });
+
+            toggleText.textContent = isExpanded ? "@Localizer["Collapse"]" : "@Localizer["SeeMore"]";
+            toggleIcon.style.transform = isExpanded ? "rotate(90deg)" : "rotate(0deg)";
+        });
+    });
+</script>
+
+
